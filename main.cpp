@@ -1,46 +1,37 @@
+#include "CircularLinkedList.hpp"
 #include <iostream>
-#include <cstdlib>  
-#include <ctime>    
+#include <string>
 
 using namespace std;
 
 int main() {
-    
-    srand(time(0));
+    // Create a circular linked list to store property names
+    CircularLinkedList<string> monopolyBoard;
 
-    
-    int stepOptions[] = {10, 50, 100, 500, 1000};
-    int numStepOptions = 5;
+    // Append some Monopoly property names
+    monopolyBoard.append("Go");
+    monopolyBoard.append("Mediterranean Avenue");
+    monopolyBoard.append("Community Chest");
+    monopolyBoard.append("Baltic Avenue");
+    monopolyBoard.append("Income Tax");
 
-   
-    int M = 10;
+    // Show the current node (should be "Go")
+    cout << "Current space: " << monopolyBoard.getCurrent() << endl;
 
-    
-    cout << "Number of Steps (N)\tTrial Number (M)\tFinal Position (D)" << endl;
+    // Step to next and show
+    monopolyBoard.step();
+    cout << "Next space: " << monopolyBoard.getCurrent() << endl;
 
-    
-    for (int i = 0; i < numStepOptions; i++) {
-        int N = stepOptions[i];
+    // Step a few more times
+    monopolyBoard.step();
+    monopolyBoard.step();
+    cout << "After 3 steps: " << monopolyBoard.getCurrent() << endl;
 
-        
-        for (int trial = 1; trial <= M; trial++) {
-            int position = 0;  
-
-            
-            for (int step = 0; step < N; step++) {
-                int flip = rand() % 2;  
-                if (flip == 0) {
-                    position--;  
-                } else {
-                    position++;  
-                }
-            }
-
-            
-            cout << N << "\t\t\t" << trial << "\t\t" << position << endl;
-        }
+    // Loop all the way back around
+    for (int i = 0; i < 37; i++) {
+        monopolyBoard.step();
     }
+    cout << "After 37 more steps: " << monopolyBoard.getCurrent() << endl;
 
     return 0;
 }
-
