@@ -1,0 +1,132 @@
+#include <iostream>
+#include <vector>
+#include <string>
+#include <stdexcept>
+
+using namespace std;
+
+class Job {
+public:
+    string description;
+    int priority;
+
+    Job(string desc = "", int pri = 0) : description(desc), priority(pri) {}
+
+    void execute() const {
+        cout << "Running: " << description << endl;
+    }
+
+    bool operator<(const Job& other) const {
+        return priority < other.priority;
+    }
+
+    bool operator>(const Job& other) const {
+        return priority > other.priority;
+    }
+};
+
+template<typename T>
+class MaxHeap {
+private:
+    vector<T> data;
+
+    void heapifyUp(int index) {
+        while (index > 0 && data[index] > data[(index - 1) / 2]) {
+            swap(data[index], data[(index - 1) / 2]);
+            index = (index - 1) / 2;
+        }
+    }
+
+    void heapifyDown(int index) {
+        int left, right, largest;
+        while (true) {
+            left = 2 * index + 1;
+            right = 2 * index + 2;
+            largest = index;
+
+            if (left < data.size() && data[left] > data[largest])
+                largest = left;
+            if (right < data.size() && data[right] > data[largest])
+                largest = right;
+            if (largest != index) {
+                swap(data[index], data[largest]);
+                index = largest;
+            } else break;
+        }
+    }
+
+public:
+    void insert(const T& value) {
+        data.push_back(value);
+        heapifyUp(data.size() - 1);
+    }
+
+    T extractMax() {
+        if (data.empty()) throw runtime_error("Heap is empty");
+        T maxVal = data[0];
+        data[0] = data.back();
+        data.pop_back();
+        heapifyDown(0);
+        return maxVal;
+    }
+
+    bool isEmpty() const {
+        return data.empty();
+    }
+};
+
+template<typename T>
+class PriorityQueue {
+private:
+    MaxHeap<T> heap;
+
+public:
+    void enqueue(const T& item) {
+        heap.insert(item);
+    }
+
+    T dequeue() {
+        return heap.extractMax();
+    }
+
+    bool isEmpty() const {
+        return heap.isEmpty();
+    }
+};
+
+class JobQueue {
+private:
+    PriorityQueue<Job> queue;
+
+public:
+    void insert(const Job& job) {
+        queue.enqueue(job);
+    }
+
+    void runHighestPriority() {
+        if (!queue.isEmpty()) {
+            Job top = queue.dequeue();
+            top.execute();
+        } else {
+            cout << "No jobs to run." << endl;
+        }
+    }
+};
+
+int main() {
+    JobQueue jobQueue;
+
+    jobQueue.insert(Job("This is job a", 5));
+    jobQueue.insert(Job("This is job b", 2));
+    jobQueue.insert(Job("This is job c", 9));
+    jobQueue.insert(Job("This is job d", 8));
+    jobQueue.insert(Job("This is job e", 1));
+
+    jobQueue.runHighestPriority();
+    jobQueue.runHighestPriority();
+    jobQueue.runHighestPriority();
+    jobQueue.runHighestPriority();
+    jobQueue.runHighestPriority();
+
+    return 0;
+}
