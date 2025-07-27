@@ -1,0 +1,104 @@
+#include <iostream>
+#include <stack>
+#include <sstream>
+#include <cctype>
+#include <string>
+
+class Calculator {
+private:
+    int getPrecedence(char op) {
+        if (op == '+' || op == '-') return 1;
+        if (op == '*' || op == '/') return 2;
+        return 0;
+    }
+
+    bool isOperator(char c) {
+        return c == '+' || c == '-' || c == '*' || c == '/';
+    }
+
+    std::string toPostfix(const std::string& infix) {
+        std::stack<char> ops;
+        std::ostringstream output;
+
+        for (size_t i = 0; i < infix.length(); ++i) {
+            char token = infix[i];
+
+            if (isspace(token)) {
+                continue;
+            }
+            else if (isdigit(token)) {
+                while (i < infix.length() && (isdigit(infix[i]) || infix[i] == '.')) {
+                    output << infix[i++];
+                }
+                output << ' ';
+                i--;
+            }
+            else if (token == '(') {
+                ops.push(token);
+            }
+            else if (token == ')') {
+                while (!ops.empty() && ops.top() != '(') {
+                    output << ops.top() << ' ';
+                    ops.pop();
+                }
+                if (!ops.empty()) ops.pop();
+            }
+            else if (isOperator(token)) {
+                while (!ops.empty() && getPrecedence(ops.top()) >= getPrecedence(token)) {
+                    output << ops.top() << ' ';
+                    ops.pop();
+                }
+                ops.push(token);
+            }
+        }
+
+        while (!ops.empty()) {
+            output << ops.top() << ' ';
+            ops.pop();
+        }
+
+        return output.str();
+    }
+
+    double evalPostfix(const std::string& postfix) {
+        std::stack<double> values;
+        std::istringstream tokens(postfix);
+        std::string token;
+
+        while (tokens >> token) {
+            if (isdigit(token[0]) || (token[0] == '-' && token.length() > 1)) {
+                values.push(std::stod(token));
+            }
+            else {
+                double b = values.top(); values.pop();
+                double a = values.top(); values.pop();
+
+                switch (token[0]) {
+                    case '+': values.push(a + b); break;
+                    case '-': values.push(a - b); break;
+                    case '*': values.push(a * b); break;
+                    case '/': values.push(a / b); break;
+                }
+            }
+        }
+
+        return values.top();
+    }
+
+public:
+    double evaluate(const std::string& expression) {
+        std::string postfix = toPostfix(expression);
+        return evalPostfix(postfix);
+    }
+};
+
+int main() {
+    Calculator calculator;
+
+    std::cout << calculator.evaluate("2 + 5") << std::endl;
+    std::cout << calculator.evaluate("3 + 6 * 5") << std::endl;
+    std::cout << calculator.evaluate("4 * ( 2 + 3 )") << std::endl;
+    std::cout << calculator.evaluate("( 7 + 9 ) / 8") << std::endl;
+
+    return 0;
+}
