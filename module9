@@ -1,0 +1,139 @@
+#include <iostream>
+#include <string>
+using namespace std;
+
+class KeyValuePair {
+public:
+    string key, value;
+    KeyValuePair(string k = "", string v = "") : key(k), value(v) {}
+    bool operator<(const KeyValuePair& other) const { return key < other.key; }
+    bool operator>(const KeyValuePair& other) const { return key > other.key; }
+    bool operator==(const KeyValuePair& other) const { return key == other.key; }
+};
+
+struct Node {
+    KeyValuePair data;
+    Node* left;
+    Node* right;
+    Node(KeyValuePair d) : data(d), left(nullptr), right(nullptr) {}
+};
+
+class SplayTree {
+private:
+    Node* root = nullptr;
+
+    Node* rotateRight(Node* x) {
+        Node* y = x->left;
+        x->left = y->right;
+        y->right = x;
+        return y;
+    }
+
+    Node* rotateLeft(Node* x) {
+        Node* y = x->right;
+        x->right = y->left;
+        y->left = x;
+        return y;
+    }
+
+    Node* splay(Node* root, const string& key) {
+        if (!root || root->data.key == key) return root;
+        if (key < root->data.key) {
+            if (!root->left) return root;
+            if (key < root->left->data.key) {
+                root->left->left = splay(root->left->left, key);
+                root = rotateRight(root);
+            } else if (key > root->left->data.key) {
+                root->left->right = splay(root->left->right, key);
+                if (root->left->right) root->left = rotateLeft(root->left);
+            }
+            return root->left ? rotateRight(root) : root;
+        } else {
+            if (!root->right) return root;
+            if (key > root->right->data.key) {
+                root->right->right = splay(root->right->right, key);
+                root = rotateLeft(root);
+            } else if (key < root->right->data.key) {
+                root->right->left = splay(root->right->left, key);
+                if (root->right->left) root->right = rotateRight(root->right);
+            }
+            return root->right ? rotateLeft(root) : root;
+        }
+    }
+
+    Node* insert(Node* root, KeyValuePair pair) {
+        if (!root) return new Node(pair);
+        root = splay(root, pair.key);
+        if (pair.key == root->data.key) return root;
+        Node* newNode = new Node(pair);
+        if (pair.key < root->data.key) {
+            newNode->right = root;
+            newNode->left = root->left;
+            root->left = nullptr;
+        } else {
+            newNode->left = root;
+            newNode->right = root->right;
+            root->right = nullptr;
+        }
+        return newNode;
+    }
+
+    Node* deleteKey(Node* root, const string& key) {
+        if (!root) return nullptr;
+        root = splay(root, key);
+        if (root->data.key != key) return root;
+        Node* newRoot;
+        if (!root->left) {
+            newRoot = root->right;
+        } else {
+            newRoot = splay(root->left, key);
+            newRoot->right = root->right;
+        }
+        delete root;
+        return newRoot;
+    }
+
+public:
+    void insert(KeyValuePair pair) {
+        root = insert(root, pair);
+    }
+
+    string get(const string& key) {
+        root = splay(root, key);
+        return root && root->data.key == key ? root->data.value : "";
+    }
+
+    void remove(const string& key) {
+        root = deleteKey(root, key);
+    }
+};
+
+class TreeMap {
+private:
+    SplayTree tree;
+public:
+    void insert(string key, string value) {
+        tree.insert(KeyValuePair(key, value));
+    }
+
+    string get(string key) {
+        return tree.get(key);
+    }
+
+    void deleteKey(string key) {
+        tree.remove(key);
+    }
+};
+
+int main() {
+    TreeMap map;
+    map.insert("keyOne", "valueOne");
+    map.insert("keyTwo", "valueTwo");
+    map.insert("keyThree", "valueThree");
+    cout << map.get("keyOne") << endl;
+    cout << map.get("keyThree") << endl;
+    cout << map.get("keyDoesNotExist") << endl;
+    map.deleteKey("keyOne");
+    cout << map.get("keyOne") << endl;
+    return 0;
+}
