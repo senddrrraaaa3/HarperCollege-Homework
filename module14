@@ -1,0 +1,105 @@
+#include <iostream>
+#include <string>
+#include <unordered_map>
+#include <queue>
+#include <vector>
+#include <memory>
+
+using namespace std;
+
+struct Node {
+    char ch;
+    int freq;
+    Node *left, *right;
+
+    Node(char c, int f) : ch(c), freq(f), left(nullptr), right(nullptr) {}
+    Node(Node* l, Node* r) : ch('\0'), freq(l->freq + r->freq), left(l), right(r) {}
+};
+
+struct Compare {
+    bool operator()(Node* a, Node* b) {
+        return a->freq > b->freq;
+    }
+};
+
+void buildCodeTable(Node* root, string code, unordered_map<char, string>& table) {
+    if (!root) return;
+    if (!root->left && !root->right) {
+        table[root->ch] = code;
+    }
+    buildCodeTable(root->left, code + "0", table);
+    buildCodeTable(root->right, code + "1", table);
+}
+
+Node* buildHuffmanTree(const string& text) {
+    unordered_map<char, int> freqMap;
+    for (char c : text) {
+        freqMap[c]++;
+    }
+
+    priority_queue<Node*, vector<Node*>, Compare> pq;
+    for (auto& [c, f] : freqMap) {
+        pq.push(new Node(c, f));
+    }
+
+    while (pq.size() > 1) {
+        Node* left = pq.top(); pq.pop();
+        Node* right = pq.top(); pq.pop();
+        pq.push(new Node(left, right));
+    }
+
+    return pq.top();
+}
+
+string compress(const string& text, unordered_map<char, string>& codeTable) {
+    Node* root = buildHuffmanTree(text);
+    buildCodeTable(root, "", codeTable);
+
+    string encoded;
+    for (char c : text) {
+        encoded += codeTable[c];
+    }
+
+    return encoded;
+}
+
+string decompress(const string& encoded, Node* root) {
+    string result;
+    Node* curr = root;
+
+    for (char bit : encoded) {
+        if (bit == '0') curr = curr->left;
+        else curr = curr->right;
+
+        if (!curr->left && !curr->right) {
+            result += curr->ch;
+            curr = root;
+        }
+    }
+
+    return result;
+}
+
+int main() {
+    string text = "Hello World";
+    unordered_map<char, string> codeTable;
+
+    string encoded = compress(text, codeTable);
+
+    cout << "Original: " << text << endl;
+    cout << "Encoded : " << encoded << endl;
+
+    Node* tree = buildHuffmanTree(text);
+    string decoded = decompress(encoded, tree);
+
+    cout << "Decoded : " << decoded << endl;
+
+    cout << "\nHuffman Codes:\n";
+    for (const auto& [ch, code] : codeTable) {
+        if (ch == ' ') cout << "'space'";
+        else cout << "'" << ch << "'";
+        cout << " => " << code << endl;
+    }
+
+    return 0;
+}
