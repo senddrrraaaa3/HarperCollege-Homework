@@ -1,0 +1,49 @@
+#include <iostream>
+#include <unordered_map>
+#include <vector>
+#include <string>
+#include <cctype>
+
+using namespace std;
+
+bool canCreateNote(string note, vector<string> articles) {
+    unordered_map<char, int> magazineLetters;
+
+    for (const string& article : articles) {
+        for (char c : article) {
+            if (!isspace(c)) {
+                magazineLetters[tolower(c)]++;
+            }
+        }
+    }
+
+    for (char c : note) {
+        if (!isspace(c)) {
+            char key = tolower(c);
+            if (magazineLetters[key] == 0) return false;
+            magazineLetters[key]--;
+        }
+    }
+
+    return true;
+}
+
+int main() {
+    vector<string> articles1 = {"I write a lot.", "To and fro.", "Here be deadly dragons!"};
+    string note1 = "The bird is red!";
+    cout << boolalpha << canCreateNote(note1, articles1) << endl;
+
+    vector<string> articles2 = {"I write a lot.", "To and fro."};
+    string note2 = "The bird is red";
+    cout << boolalpha << canCreateNote(note2, articles2) << endl;
+
+    vector<string> articles3 = {"a", "b", "c"};
+    string note3 = "abc";
+    cout << boolalpha << canCreateNote(note3, articles3) << endl;
+
+    vector<string> articles4 = {"a", "b", "d"};
+    string note4 = "abc";
+    cout << boolalpha << canCreateNote(note4, articles4) << endl;
+
+    return 0;
+}
