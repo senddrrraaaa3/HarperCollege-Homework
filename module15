@@ -1,0 +1,53 @@
+#include <iostream>
+#include <unordered_map>
+#include <vector>
+#include <queue>
+#include <set>
+
+using namespace std;
+
+int dijkstra(unordered_map<int, vector<int>>& graph, int start, int end) {
+    unordered_map<int, int> dist;
+    set<int> visited;
+    queue<int> q;
+
+    dist[start] = 0;
+    q.push(start);
+
+    while (!q.empty()) {
+        int current = q.front();
+        q.pop();
+
+        if (visited.count(current)) continue;
+        visited.insert(current);
+
+        for (int neighbor : graph[current]) {
+            if (!dist.count(neighbor) || dist[neighbor] > dist[current] + 1) {
+                dist[neighbor] = dist[current] + 1;
+                q.push(neighbor);
+            }
+        }
+    }
+
+    if (dist.count(end)) return dist[end];
+    return -1;
+}
+
+int main() {
+    unordered_map<int, vector<int>> graph;
+
+    // Directed edges based on your diagram
+    graph[1] = {2, 3, 5};
+    graph[2] = {4};
+    graph[3] = {5};
+    graph[4] = {3};
+
+    // Example tests
+    cout << "1 to 2: " << dijkstra(graph, 1, 2) << endl; // 1
+    cout << "1 to 5: " << dijkstra(graph, 1, 5) << endl; // 1
+    cout << "2 to 5: " << dijkstra(graph, 2, 5) << endl; // 3
+    cout << "5 to 1: " << dijkstra(graph, 5, 1) << endl; // -1
+    cout << "2 to 1: " << dijkstra(graph, 2, 1) << endl; // -1
+
+    return 0;
+}
