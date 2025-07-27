@@ -1,0 +1,172 @@
+#include <iostream>
+#include <sstream>
+#include <string>
+#include <vector>
+#include <algorithm>
+
+struct Node {
+    int value;
+    Node* left;
+    Node* right;
+    int height;
+    Node(int v)
+        : value(v), left(nullptr), right(nullptr), height(1)
+    {}
+};
+
+int getHeight(Node* n) {
+    return n ? n->height : 0;
+}
+
+void updateNodeHeight(Node* n) {
+    int hl = getHeight(n->left);
+    int hr = getHeight(n->right);
+    n->height = 1 + std::max(hl, hr);
+}
+
+int getBalance(Node* n) {
+    return n ? getHeight(n->left) - getHeight(n->right) : 0;
+}
+
+Node* rotateRight(Node* y) {
+    Node* x = y->left;
+    Node* T2 = x->right;
+    x->right = y;
+    y->left  = T2;
+    updateNodeHeight(y);
+    updateNodeHeight(x);
+    return x;
+}
+
+Node* rotateLeft(Node* x) {
+    Node* y = x->right;
+    Node* T2 = y->left;
+    y->left  = x;
+    x->right = T2;
+    updateNodeHeight(x);
+    updateNodeHeight(y);
+    return y;
+}
+
+Node* rebalance(Node* root) {
+    updateNodeHeight(root);
+    int balance = getBalance(root);
+    if (balance > 1) {
+        if (getBalance(root->left) < 0)
+            root->left = rotateLeft(root->left);
+        return rotateRight(root);
+    }
+    if (balance < -1) {
+        if (getBalance(root->right) > 0)
+            root->right = rotateRight(root->right);
+        return rotateLeft(root);
+    }
+    return root;
+}
+
+Node* insertNode(Node* node, int v) {
+    if (!node) return new Node(v);
+    if (v < node->value)
+        node->left  = insertNode(node->left, v);
+    else if (v > node->value)
+        node->right = insertNode(node->right, v);
+    return rebalance(node);
+}
+
+Node* findMinNode(Node* node) {
+    while (node->left) node = node->left;
+    return node;
+}
+
+Node* deleteNode(Node* root, int v) {
+    if (!root) return nullptr;
+    if (v < root->value)
+        root->left  = deleteNode(root->left, v);
+    else if (v > root->value)
+        root->right = deleteNode(root->right, v);
+    else {
+        if (!root->left || !root->right) {
+            Node* child = root->left ? root->left : root->right;
+            delete root;
+            return child;
+        }
+        Node* succ = findMinNode(root->right);
+        root->value = succ->value;
+        root->right = deleteNode(root->right, succ->value);
+    }
+    return rebalance(root);
+}
+
+void serializeNode(Node* node, std::ostringstream& out) {
+    if (!node) {
+        out << "nil,";
+        return;
+    }
+    out << node->value << ",";
+    serializeNode(node->left,  out);
+    serializeNode(node->right, out);
+}
+
+std::string serializeTree(Node* root) {
+    std::ostringstream out;
+    serializeNode(root, out);
+    std::string s = out.str();
+    if (!s.empty()) s.pop_back();
+    return s;
+}
+
+std::vector<std::string> split(const std::string& s) {
+    std::vector<std::string> parts;
+    std::istringstream in(s);
+    std::string tok;
+    while (std::getline(in, tok, ',')) {
+        parts.push_back(tok);
+    }
+    return parts;
+}
+
+Node* deserializeNode(const std::vector<std::string>& toks, int& idx) {
+    if (idx >= (int)toks.size() || toks[idx] == "nil") {
+        idx++;
+        return nullptr;
+    }
+    int v = std::stoi(toks[idx++]);
+    Node* root = new Node(v);
+    root->left  = deserializeNode(toks, idx);
+    root->right = deserializeNode(toks, idx);
+    updateNodeHeight(root);
+    return root;
+}
+
+Node* deserializeTree(const std::string& data) {
+    auto toks = split(data);
+    int idx = 0;
+    return deserializeNode(toks, idx);
+}
+
+class AVLTree {
+public:
+    AVLTree(): root(nullptr) {}
+    void insert(int v) { root = insertNode(root, v); }
+    void remove(int v) { root = deleteNode(root, v); }
+    std::string serialize() const { return serializeTree(root); }
+    void deserialize(const std::string& data) { root = deserializeTree(data); }
+private:
+    Node* root;
+};
+
+int main() {
+    AVLTree tree;
+    tree.insert(3);
+    tree.insert(4);
+    tree.insert(5);
+    tree.insert(6);
+    std::cout << tree.serialize() << "\n";
+    tree.remove(6);
+    std::cout << tree.serialize() << "\n";
+    std::string snap = tree.serialize();
+    AVLTree copy;
+    copy.deserialize(snap);
+    std::cout << copy.serialize() << "\n";
+    return 0;
+}
